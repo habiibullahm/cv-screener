@@ -32,7 +32,7 @@ Biarkan terminal tetap terbuka. Bot hanya online selama process ini berjalan.
 
 ## Cara pakai di Telegram
 
-1. Buka `@cv_screener_bot`
+1. Buka [@cv_screener_bot](https://t.me/cv_screener_bot)
 2. Kirim `/start`
 3. Kirim `/screen`
 4. Paste teks JD **atau** kirim link lowongan (career page publik)
@@ -88,9 +88,31 @@ help - Bantuan singkat
 
 Tambahkan Botpic (logo 512×512) lewat Edit Bot → Botpic.
 
+## Security & privacy
+
+### CV PDF
+- Diproses **in-memory only** (tidak ditulis ke disk / `tmp`)
+- Maksimal **5 MB**
+- Validasi magic header `%PDF-`
+- Download di-stream dengan size cap
+- Buffer di-wipe setelah teks diekstrak
+- Log error tanpa isi file / URL ber-token
+
+### Job link fetch (anti-SSRF)
+- Hanya `http` / `https`, port **80/443**
+- Block hostname sensitif (`localhost`, metadata, `.local`)
+- Block private / link-local / loopback IP (IPv4 + IPv6, termasuk IPv4-mapped seperti `::ffff:7f00:1`)
+- DNS di-resolve dulu, lalu koneksi **di-pin ke IP yang sudah divalidasi** (mencegah DNS rebinding)
+- Redirect diikuti manual (max 5), tiap hop di-validasi + di-pin ulang
+- Body HTML dibatasi **1.5 MB**
+- Tolak URL dengan username/password
+
+### Secrets
+- `BOT_TOKEN` hanya di `.env` (lokal) atau Railway Variables
+- Jangan commit `.env`
+
 ## Catatan
 
 - Hanya PDF berbasis teks. PDF hasil scan (gambar) belum didukung (tanpa OCR).
 - Session tersimpan di memori; restart bot menghapus session aktif.
-- Jangan commit file `.env`.
 - Di Railway, `BOT_TOKEN` diisi lewat Variables (tanpa file `.env`).

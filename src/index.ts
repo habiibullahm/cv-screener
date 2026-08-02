@@ -32,6 +32,7 @@ const bot = createBot(token);
 await bot.api.setMyCommands([
   { command: "start", description: "Mulai & cara pakai" },
   { command: "screen", description: "Bandingkan JD dengan CV" },
+  { command: "done", description: "Selesai + thank you" },
   { command: "cancel", description: "Batalkan session" },
   { command: "help", description: "Bantuan singkat" },
 ]);
