@@ -40,15 +40,13 @@ export function afterResultKeyboard(resultCount: number): InlineKeyboard {
 }
 
 export const START_MESSAGE = [
-  "Halo! Selamat datang di <b>CV Screener</b>.",
-  "Screen CV kandidat terhadap job posting kamu — skor match + keyword yang cocok/kurang, dalam hitungan detik.",
+  "Halo, HR! Selamat datang di <b>CV Screener</b>.",
+  "Cek cocok tidaknya CV kandidat vs job posting — skor + keyword missing.",
   "",
-  "<b>Cara pakai</b>",
-  "1. Ketuk <b>Mulai screening</b> atau /screen",
-  "2. Paste JD <b>atau</b> kirim link job posting (career page publik)",
-  "3. Upload CV kandidat dalam format PDF",
+  "Cara pakai: <b>Mulai screening</b> → paste JD → upload CV PDF.",
+  "Satu JD bisa untuk banyak CV + ranking.",
   "",
-  "Hasilnya: skor match + keyword matched / missing (first-pass filter, bukan keputusan hiring final).",
+  "<i>Ini first-pass filter, bukan keputusan final.</i>",
   BRANDING_FOOTER,
 ].join("\n");
 
@@ -94,11 +92,11 @@ export const ASK_CV_NEXT_MESSAGE = [
 ].join("\n");
 
 export const IDLE_HINT_MESSAGE = [
-  "Halo! Bot ini khusus untuk <b>screening CV kandidat vs job posting</b>.",
-  "Pesan tadi di luar alur screening — tidak masalah.",
+  "Halo, HR! Bot ini untuk screening <b>CV kandidat vs job posting</b>.",
+  "Pesan tadi di luar alur — tidak masalah.",
   "",
-  "Untuk mulai: ketuk <b>Mulai screening</b> atau kirim /screen",
-  "Butuh panduan? Ketuk <b>Bantuan</b> atau /help",
+  "Mulai: ketuk <b>Mulai screening</b> atau /screen",
+  "Bantuan: ketuk <b>Bantuan</b> atau /help",
   BRANDING_FOOTER,
 ].join("\n");
 
