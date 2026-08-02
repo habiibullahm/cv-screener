@@ -41,12 +41,12 @@ export function afterResultKeyboard(resultCount: number): InlineKeyboard {
 
 export const START_MESSAGE = [
   "Halo, HR! Selamat datang di <b>CV Screener</b>.",
-  "Cek cocok tidaknya CV kandidat vs job posting — skor + keyword missing.",
+  "Cek cocok tidaknya CV kandidat vs job posting — score + keyword missing.",
   "",
   "Cara pakai: <b>Mulai screening</b> → paste JD → upload CV PDF.",
   "Satu JD bisa untuk banyak CV + ranking.",
   "",
-  "<i>Ini first-pass filter, bukan keputusan final.</i>",
+  "<i>Ini first-pass filter, bukan keputusan hiring final.</i>",
   BRANDING_FOOTER,
 ].join("\n");
 
@@ -62,8 +62,8 @@ export const HELP_MESSAGE = [
   "Step 1: paste teks JD atau kirim link career page publik.",
   "LinkedIn/JobStreet sering terblokir — kalau gagal, paste JD manual.",
   "",
-  "Setelah skor: <b>Upload CV lain</b> memakai JD yang sama, atau <b>Ganti JD</b>.",
-  "Skor bersifat keyword overlap (rule-based), bukan AI.",
+  "Setelah score: <b>Upload CV lain</b> memakai JD yang sama, atau <b>Ganti JD</b>.",
+  "Score dari keyword overlap (rule-based), bukan AI.",
   "",
   "Privacy: CV PDF diproses di memori dan tidak disimpan ke server sebagai file.",
   BRANDING_FOOTER,
@@ -86,7 +86,7 @@ export const ASK_CV_MESSAGE = [
 /** Soft prompt when HR screens another CV against the same JD. */
 export const ASK_CV_NEXT_MESSAGE = [
   "<b>CV kandidat berikutnya</b>",
-  "JD masih aktif. Kirim CV lain sebagai file <b>PDF</b>.",
+  "JD session ini masih dipakai. Kirim CV lain sebagai file <b>PDF</b>.",
   "",
   "<i>Privacy: CV diproses di memori, tidak disimpan.</i>",
 ].join("\n");
@@ -139,8 +139,12 @@ export const CLEAR_MESSAGE = [
 ].join("\n");
 
 function scoreBandLabel(score: number): string {
-  if (score <= 39) return "Weak match — gap keyword besar; pertimbangkan skip atau screening ringan";
-  if (score <= 69) return "Review — cocok sebagian; cek missing di interview";
+  if (score <= 39) {
+    return "Weak match — gap keyword besar; pertimbangkan skip atau screening ringan";
+  }
+  if (score <= 69) {
+    return "Review — cocok sebagian; cek missing di interview";
+  }
   return "Strong interview — match kuat; tetap verifikasi missing penting";
 }
 
@@ -169,7 +173,7 @@ export function formatScoreMessage(result: ScoreResult, fileName = "CV"): string
 
   const tip =
     result.missing.length > 0
-      ? "Tip HR: missing keywords bisa jadi pertanyaan interview — jangan anggap skor sebagai keputusan final."
+      ? "Tip HR: missing keywords bisa jadi pertanyaan interview — jangan anggap score sebagai keputusan final."
       : "Tip HR: keyword JD sudah banyak yang match. Tetap verifikasi pengalaman di interview.";
 
   return [
@@ -195,7 +199,7 @@ const RANKING_DISPLAY_LIMIT = 10;
 export function formatRankingMessage(results: ScreenedResult[]): string {
   if (results.length === 0) {
     return [
-      "<b>Ranking vs JD aktif</b>",
+      "<b>Ranking kandidat (JD session ini)</b>",
       "Belum ada CV yang di-screen di session ini.",
       BRANDING_FOOTER,
     ].join("\n");
@@ -209,7 +213,7 @@ export function formatRankingMessage(results: ScreenedResult[]): string {
   const extra = sorted.length - shown.length;
 
   return [
-    "<b>Ranking vs JD aktif</b>",
+    "<b>Ranking kandidat (JD session ini)</b>",
     ...lines,
     ...(extra > 0 ? [`… +${extra} lagi`] : []),
     "",
