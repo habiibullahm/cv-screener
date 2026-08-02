@@ -1,0 +1,25 @@
+{
+  "name": "cv-screener",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telegram bot MVP: ATS-style CV vs job description keyword screener",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "grammy": "^1.45.1",
+    "pdf-parse": "^2.4.5",
+    "tsx": "^4.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "typescript": "^7.0.2"
+  }
+}
