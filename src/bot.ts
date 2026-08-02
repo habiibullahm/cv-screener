@@ -2,9 +2,11 @@ import { Bot, InlineKeyboard, type Context } from "grammy";
 import { fetchJdFromUrl, isHttpUrl, JdFetchError } from "./jdUrl.js";
 import {
   ASK_CV_MESSAGE,
+  ASK_CV_NEXT_MESSAGE,
   ASK_CV_PDF_ONLY_MESSAGE,
   ASK_JD_MESSAGE,
   CANCEL_MESSAGE,
+  CLEAR_MESSAGE,
   DONE_MESSAGE,
   HELP_MESSAGE,
   IDLE_HINT_MESSAGE,
@@ -12,6 +14,7 @@ import {
   START_MESSAGE,
   afterResultKeyboard,
   escapeHtml,
+  formatRankingMessage,
   formatScoreMessage,
   mainKeyboard,
 } from "./messages.js";
@@ -23,7 +26,17 @@ import {
   downloadTelegramFileCapped,
   wipeBuffer,
 } from "./securePdf.js";
-import { clearSession, getSession, setStep } from "./session.js";
+import {
+  addScreenedResult,
+  beginFreshScreen,
+  changeJd,
+  clearSession,
+  getSession,
+  keepJdAwaitingCv,
+  setStep,
+  takeBotMessages,
+  trackBotMessage,
+} from "./session.js";
 
 const replyOpts = {
   parse_mode: "HTML" as const,
@@ -31,7 +44,9 @@ const replyOpts = {
   link_preview_options: { is_disabled: true },
 };
 
-const cancelKeyboard = new InlineKeyboard().text("Batal", "cancel");
+const cancelKeyboard = new InlineKeyboard()
+  .text("Batal", "cancel")
+  .text("Clear chat", "clear");
 
 const sessionReplyOpts = {
   parse_mode: "HTML" as const,
@@ -63,24 +78,38 @@ function isLikelyJdText(text: string): boolean {
   return true;
 }
 
+async function replyTracked(
+  ctx: Context,
+  text: string,
+  opts?: Parameters<Context["reply"]>[1],
+): Promise<void> {
+  const msg = await ctx.reply(text, opts);
+  const chatId = ctx.chat?.id;
+  if (chatId !== undefined) trackBotMessage(chatId, msg.message_id);
+}
+
+function trackId(chatId: number, messageId: number): void {
+  trackBotMessage(chatId, messageId);
+}
+
 async function replyIdleHint(ctx: Context): Promise<void> {
-  await ctx.reply(IDLE_HINT_MESSAGE, replyOpts);
+  await replyTracked(ctx, IDLE_HINT_MESSAGE, replyOpts);
 }
 
 async function replyInvalidJd(ctx: Context): Promise<void> {
-  await ctx.reply(INVALID_JD_MESSAGE, sessionReplyOpts);
+  await replyTracked(ctx, INVALID_JD_MESSAGE, sessionReplyOpts);
 }
 
 async function replyAskCvPdfOnly(ctx: Context): Promise<void> {
-  await ctx.reply(ASK_CV_PDF_ONLY_MESSAGE, sessionReplyOpts);
+  await replyTracked(ctx, ASK_CV_PDF_ONLY_MESSAGE, sessionReplyOpts);
 }
 
 async function beginScreen(ctx: Context): Promise<void> {
   const chatId = ctx.chat?.id;
   if (chatId === undefined) return;
 
-  setStep(chatId, "awaiting_jd");
-  await ctx.reply(ASK_JD_MESSAGE, {
+  beginFreshScreen(chatId);
+  await replyTracked(ctx, ASK_JD_MESSAGE, {
     parse_mode: "HTML",
     reply_markup: cancelKeyboard,
   });
@@ -91,11 +120,35 @@ async function cancelScreen(ctx: Context): Promise<void> {
   if (chatId === undefined) return;
 
   clearSession(chatId);
-  await ctx.reply(CANCEL_MESSAGE, {
+  await replyTracked(ctx, CANCEL_MESSAGE, {
     parse_mode: "HTML",
     reply_markup: mainKeyboard,
     link_preview_options: { is_disabled: true },
   });
+}
+
+async function finishDone(ctx: Context): Promise<void> {
+  const chatId = ctx.chat?.id;
+  if (chatId !== undefined) clearSession(chatId);
+  await replyTracked(ctx, DONE_MESSAGE, replyOpts);
+}
+
+async function clearChat(ctx: Context): Promise<void> {
+  const chatId = ctx.chat?.id;
+  if (chatId === undefined) return;
+
+  const messageIds = takeBotMessages(chatId);
+  clearSession(chatId);
+
+  for (const messageId of messageIds) {
+    try {
+      await ctx.api.deleteMessage(chatId, messageId);
+    } catch {
+      // Message may already be gone or too old (>48h).
+    }
+  }
+
+  await replyTracked(ctx, CLEAR_MESSAGE, replyOpts);
 }
 
 function isPdfDocument(ctx: Context): boolean {
@@ -111,11 +164,11 @@ export function createBot(token: string): Bot {
   const bot = new Bot(token);
 
   bot.command("start", async (ctx) => {
-    await ctx.reply(START_MESSAGE, replyOpts);
+    await replyTracked(ctx, START_MESSAGE, replyOpts);
   });
 
   bot.command("help", async (ctx) => {
-    await ctx.reply(HELP_MESSAGE, replyOpts);
+    await replyTracked(ctx, HELP_MESSAGE, replyOpts);
   });
 
   bot.command("screen", async (ctx) => {
@@ -127,9 +180,11 @@ export function createBot(token: string): Bot {
   });
 
   bot.command("done", async (ctx) => {
-    const chatId = ctx.chat?.id;
-    if (chatId !== undefined) clearSession(chatId);
-    await ctx.reply(DONE_MESSAGE, replyOpts);
+    await finishDone(ctx);
+  });
+
+  bot.command("clear", async (ctx) => {
+    await clearChat(ctx);
   });
 
   bot.callbackQuery("screen", async (ctx) => {
@@ -139,7 +194,7 @@ export function createBot(token: string): Bot {
 
   bot.callbackQuery("help", async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.reply(HELP_MESSAGE, replyOpts);
+    await replyTracked(ctx, HELP_MESSAGE, replyOpts);
   });
 
   bot.callbackQuery("cancel", async (ctx) => {
@@ -149,9 +204,53 @@ export function createBot(token: string): Bot {
 
   bot.callbackQuery("done", async (ctx) => {
     await ctx.answerCallbackQuery({ text: "Thank you!" });
+    await finishDone(ctx);
+  });
+
+  bot.callbackQuery("clear", async (ctx) => {
+    await ctx.answerCallbackQuery({ text: "Clearing…" });
+    await clearChat(ctx);
+  });
+
+  bot.callbackQuery("next_cv", async (ctx) => {
+    await ctx.answerCallbackQuery();
     const chatId = ctx.chat?.id;
-    if (chatId !== undefined) clearSession(chatId);
-    await ctx.reply(DONE_MESSAGE, replyOpts);
+    if (chatId === undefined) return;
+
+    const session = getSession(chatId);
+    if (!session.jdText) {
+      await beginScreen(ctx);
+      return;
+    }
+
+    keepJdAwaitingCv(chatId);
+    await replyTracked(ctx, ASK_CV_NEXT_MESSAGE, sessionReplyOpts);
+  });
+
+  bot.callbackQuery("change_jd", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const chatId = ctx.chat?.id;
+    if (chatId === undefined) return;
+
+    changeJd(chatId);
+    await replyTracked(ctx, ASK_JD_MESSAGE, {
+      parse_mode: "HTML",
+      reply_markup: cancelKeyboard,
+    });
+  });
+
+  bot.callbackQuery("ranking", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const chatId = ctx.chat?.id;
+    if (chatId === undefined) return;
+
+    const session = getSession(chatId);
+    const results = session.results ?? [];
+    await replyTracked(ctx, formatRankingMessage(results), {
+      parse_mode: "HTML",
+      reply_markup: afterResultKeyboard(results.length),
+      link_preview_options: { is_disabled: true },
+    });
   });
 
   bot.on("message:text", async (ctx) => {
@@ -166,6 +265,7 @@ export function createBot(token: string): Bot {
     if (session.step === "awaiting_jd") {
       if (isHttpUrl(text)) {
         const status = await ctx.reply("Mengambil JD dari link...");
+        trackId(chatId, status.message_id);
         try {
           const jdText = await fetchJdFromUrl(text);
           setStep(chatId, "awaiting_cv", jdText);
@@ -176,7 +276,9 @@ export function createBot(token: string): Bot {
               "<b>JD dari link tersimpan.</b>",
               `Sumber: ${escapeHtml(text)}`,
               "",
-              "Lanjut Step 2/2 — kirim CV sebagai file <b>PDF</b>.",
+              "Lanjut Step 2/2 — kirim CV kandidat sebagai file <b>PDF</b>.",
+              "",
+              "<i>Privacy: CV diproses di memori, tidak disimpan.</i>",
             ].join("\n"),
             {
               parse_mode: "HTML",
@@ -212,7 +314,7 @@ export function createBot(token: string): Bot {
       }
 
       setStep(chatId, "awaiting_cv", text);
-      await ctx.reply(ASK_CV_MESSAGE, {
+      await replyTracked(ctx, ASK_CV_MESSAGE, {
         parse_mode: "HTML",
         reply_markup: cancelKeyboard,
       });
@@ -276,7 +378,9 @@ export function createBot(token: string): Bot {
 
     const fileId = ctx.message.document.file_id;
     const fileUniqueId = ctx.message.document.file_unique_id;
+    const fileName = ctx.message.document.file_name?.trim() || "CV";
     const status = await ctx.reply("Memproses CV...");
+    trackId(chatId, status.message_id);
     let cvBuffer: Buffer | undefined;
 
     try {
@@ -304,12 +408,20 @@ export function createBot(token: string): Bot {
       }
 
       const result = scoreCvAgainstJd(session.jdText, cvText);
-      clearSession(chatId);
-      await ctx.api.editMessageText(chatId, status.message_id, formatScoreMessage(result), {
-        parse_mode: "HTML",
-        reply_markup: afterResultKeyboard,
-        link_preview_options: { is_disabled: true },
-      });
+      addScreenedResult(chatId, { fileName, score: result.score });
+      keepJdAwaitingCv(chatId);
+      const resultCount = getSession(chatId).results?.length ?? 0;
+
+      await ctx.api.editMessageText(
+        chatId,
+        status.message_id,
+        formatScoreMessage(result, fileName),
+        {
+          parse_mode: "HTML",
+          reply_markup: afterResultKeyboard(resultCount),
+          link_preview_options: { is_disabled: true },
+        },
+      );
     } catch (error) {
       if (cvBuffer) {
         wipeBuffer(cvBuffer);
@@ -335,7 +447,7 @@ export function createBot(token: string): Bot {
           reply_markup: mainKeyboard,
         });
       } catch {
-        await ctx.reply(userMessage, { reply_markup: mainKeyboard });
+        await replyTracked(ctx, userMessage, { reply_markup: mainKeyboard });
       }
     }
   });
