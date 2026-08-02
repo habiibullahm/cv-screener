@@ -59,6 +59,32 @@ Bot memakai **long polling** (tidak perlu domain/webhook).
 
 Kalau deploy gagal, cek logs untuk: token kosong, start command salah, atau install error.
 
+## Profil bot di BotFather (opsional)
+
+Di @BotFather → `/mybots` → CV Screener:
+
+**About**
+```text
+Cek kecocokan CV vs job description dalam hitungan detik.
+```
+
+**Description**
+```text
+CV Screener membandingkan JD yang kamu paste dengan CV PDF, lalu memberi skor match + keyword yang cocok/kurang.
+
+Cara pakai: /screen → paste JD → upload CV PDF.
+```
+
+**Commands** (atau biarkan bot set otomatis saat start)
+```text
+start - Mulai & cara pakai
+screen - Bandingkan JD dengan CV
+cancel - Batalkan session
+help - Bantuan singkat
+```
+
+Tambahkan Botpic (logo 512×512) lewat Edit Bot → Botpic.
+
 ## Catatan
 
 - Hanya PDF berbasis teks. PDF hasil scan (gambar) belum didukung (tanpa OCR).

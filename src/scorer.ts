@@ -213,27 +213,3 @@ export function scoreCvAgainstJd(jdText: string, cvText: string): ScoreResult {
     missing: missing.slice(0, MAX_LIST),
   };
 }
-
-export function formatScoreMessage(result: ScoreResult): string {
-  if (result.totalKeywords === 0) {
-    return [
-      "Tidak ada keyword yang cukup dari JD.",
-      "Coba paste bagian Requirements / Qualifications yang lebih spesifik, lalu /screen lagi.",
-    ].join("\n");
-  }
-
-  const matchedLine =
-    result.matched.length > 0 ? result.matched.join(", ") : "(tidak ada)";
-  const missingLine =
-    result.missing.length > 0 ? result.missing.join(", ") : "(tidak ada)";
-
-  return [
-    `Match score: ${result.score}%`,
-    `(${result.matched.length}/${result.totalKeywords} keywords dari JD)`,
-    "",
-    `Matched: ${matchedLine}`,
-    `Missing: ${missingLine}`,
-    "",
-    "Tip: tambahkan keyword yang missing di CV (jika relevan), lalu /screen lagi.",
-  ].join("\n");
-}

@@ -29,6 +29,13 @@ if (token.includes("your_telegram_bot_token_here") || !token.includes(":")) {
 
 const bot = createBot(token);
 
+await bot.api.setMyCommands([
+  { command: "start", description: "Mulai & cara pakai" },
+  { command: "screen", description: "Bandingkan JD dengan CV" },
+  { command: "cancel", description: "Batalkan session" },
+  { command: "help", description: "Bantuan singkat" },
+]);
+
 bot.start({
   onStart: (info) => {
     console.log(`CV Screener bot @${info.username} is running (polling).`);
