@@ -4,6 +4,14 @@ import type { ScoreResult } from "./types.js";
 export const BOT_USERNAME = "cv_screener_bot";
 export const BOT_LINK = `https://t.me/${BOT_USERNAME}`;
 
+const SHARE_TEXT =
+  "Coba CV Screener — bandingkan CV PDF dengan job description secara cepat.";
+
+/** Opens Telegram's native share picker (not just open the bot chat). */
+export const BOT_SHARE_LINK =
+  `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}` +
+  `&text=${encodeURIComponent(SHARE_TEXT)}`;
+
 export function escapeHtml(text: string): string {
   return text
     .replaceAll("&", "&amp;")
@@ -15,7 +23,7 @@ export const BRANDING_FOOTER = [
   "",
   "—",
   `<b>CV Screener</b> · <a href="${BOT_LINK}">@${BOT_USERNAME}</a>`,
-  `Share: ${BOT_LINK}`,
+  `Share: <a href="${BOT_SHARE_LINK}">bagikan bot ini</a>`,
 ].join("\n");
 
 export const mainKeyboard = new InlineKeyboard()
@@ -23,13 +31,13 @@ export const mainKeyboard = new InlineKeyboard()
   .text("Bantuan", "help")
   .row()
   .text("Batal", "cancel")
-  .url("Bagikan bot", BOT_LINK);
+  .url("Bagikan bot", BOT_SHARE_LINK);
 
 export const afterResultKeyboard = new InlineKeyboard()
   .text("Screen lagi", "screen")
   .text("Selesai", "done")
   .row()
-  .url("Bagikan bot", BOT_LINK);
+  .url("Bagikan bot", BOT_SHARE_LINK);
 
 export const START_MESSAGE = [
   "Halo! Selamat datang di <b>CV Screener</b>.",
