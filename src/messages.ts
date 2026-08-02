@@ -24,7 +24,7 @@ export const START_MESSAGE = [
   "",
   "<b>Cara pakai</b>",
   "1. Ketuk <b>Mulai screening</b> atau /screen",
-  "2. Paste JD (bagian Requirements / Qualifications)",
+  "2. Paste JD <b>atau</b> kirim link lowongan (career page publik)",
   "3. Upload CV dalam format PDF",
   "",
   "Hasilnya: skor match + keyword yang cocok / kurang.",
@@ -37,14 +37,16 @@ export const HELP_MESSAGE = [
   "/cancel — batalkan session",
   "/help — bantuan singkat",
   "",
-  "Tip: paste bagian Requirements saja biar skor lebih relevan.",
+  "Step 1 bisa paste teks JD atau kirim link career page publik.",
+  "LinkedIn/JobStreet sering terblokir — kalau gagal, paste JD manual.",
 ].join("\n");
 
 export const ASK_JD_MESSAGE = [
   "<b>Step 1/2 — Job description</b>",
-  "Kirim teks JD sekarang.",
+  "Paste teks JD <b>atau</b> kirim link lowongan (career page publik).",
   "",
-  "Tip: cukup bagian <i>Requirements / Qualifications</i>.",
+  "Contoh link yang biasanya bisa dibaca: Greenhouse, Lever, Ashby, /careers perusahaan.",
+  "Tip: kalau paste teks, cukup bagian <i>Requirements / Qualifications</i>.",
 ].join("\n");
 
 export const ASK_CV_MESSAGE = [

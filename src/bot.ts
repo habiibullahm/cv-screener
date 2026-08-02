@@ -1,14 +1,16 @@
 import { Bot, InlineKeyboard, type Context } from "grammy";
-import { extractTextFromPdf } from "./pdf.js";
+import { fetchJdFromUrl, isHttpUrl, JdFetchError } from "./jdUrl.js";
 import {
   ASK_CV_MESSAGE,
   ASK_JD_MESSAGE,
   HELP_MESSAGE,
   START_MESSAGE,
   afterResultKeyboard,
+  escapeHtml,
   formatScoreMessage,
   mainKeyboard,
 } from "./messages.js";
+import { extractTextFromPdf } from "./pdf.js";
 import { scoreCvAgainstJd } from "./scorer.js";
 import { clearSession, getSession, setStep } from "./session.js";
 
@@ -94,9 +96,51 @@ export function createBot(token: string): Bot {
     }
 
     if (session.step === "awaiting_jd") {
+      if (isHttpUrl(text)) {
+        const status = await ctx.reply("Mengambil JD dari link...");
+        try {
+          const jdText = await fetchJdFromUrl(text);
+          setStep(chatId, "awaiting_cv", jdText);
+          await ctx.api.editMessageText(
+            chatId,
+            status.message_id,
+            [
+              "<b>JD dari link tersimpan.</b>",
+              `Sumber: ${escapeHtml(text)}`,
+              "",
+              "Lanjut Step 2/2 — kirim CV sebagai file <b>PDF</b>.",
+            ].join("\n"),
+            {
+              parse_mode: "HTML",
+              reply_markup: cancelKeyboard,
+            },
+          );
+        } catch (error) {
+          const reason =
+            error instanceof JdFetchError
+              ? error.message
+              : "Tidak bisa membaca link ini.";
+          await ctx.api.editMessageText(
+            chatId,
+            status.message_id,
+            [
+              `<b>Gagal membaca link</b>`,
+              escapeHtml(reason),
+              "",
+              "Paste teks JD manual (Requirements / Qualifications), atau kirim link career page publik lain.",
+            ].join("\n"),
+            {
+              parse_mode: "HTML",
+              reply_markup: cancelKeyboard,
+            },
+          );
+        }
+        return;
+      }
+
       if (text.length < 20) {
         await ctx.reply(
-          "JD terlalu pendek. Paste requirements yang lebih lengkap, atau ketuk <b>Batal</b>.",
+          "JD terlalu pendek. Paste requirements yang lebih lengkap, kirim link career page, atau ketuk <b>Batal</b>.",
           {
             parse_mode: "HTML",
             reply_markup: mainKeyboard,

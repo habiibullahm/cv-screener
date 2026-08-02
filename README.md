@@ -35,9 +35,12 @@ Biarkan terminal tetap terbuka. Bot hanya online selama process ini berjalan.
 1. Buka `@cv_screener_bot`
 2. Kirim `/start`
 3. Kirim `/screen`
-4. Paste teks JD (paling berguna bagian Requirements / Qualifications)
+4. Paste teks JD **atau** kirim link lowongan (career page publik)
 5. Upload CV sebagai file **PDF**
 6. Terima match score + keyword matched / missing
+
+Link yang biasanya bisa dibaca: Greenhouse, Lever, Ashby, halaman `/careers` perusahaan.  
+LinkedIn/JobStreet sering gagal (login/anti-bot) — kalau begitu, paste JD manual.
 
 Perintah lain:
 
