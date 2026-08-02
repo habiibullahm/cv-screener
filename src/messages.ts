@@ -1,16 +1,8 @@
 import { InlineKeyboard } from "grammy";
-import type { ScoreResult } from "./types.js";
+import type { ScoreResult, ScreenedResult } from "./types.js";
 
 export const BOT_USERNAME = "cv_screener_bot";
 export const BOT_LINK = `https://t.me/${BOT_USERNAME}`;
-
-const SHARE_TEXT =
-  "Coba CV Screener — bandingkan CV PDF dengan job description secara cepat.";
-
-/** Opens Telegram's native share picker (not just open the bot chat). */
-export const BOT_SHARE_LINK =
-  `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}` +
-  `&text=${encodeURIComponent(SHARE_TEXT)}`;
 
 export function escapeHtml(text: string): string {
   return text
@@ -23,80 +15,101 @@ export const BRANDING_FOOTER = [
   "",
   "—",
   `<b>CV Screener</b> · <a href="${BOT_LINK}">@${BOT_USERNAME}</a>`,
-  `Share: <a href="${BOT_SHARE_LINK}">bagikan bot ini</a>`,
 ].join("\n");
 
 export const mainKeyboard = new InlineKeyboard()
   .text("Mulai screening", "screen")
   .text("Bantuan", "help")
   .row()
-  .text("Batal", "cancel")
-  .url("Bagikan bot", BOT_SHARE_LINK);
+  .text("Clear chat", "clear");
 
-export const afterResultKeyboard = new InlineKeyboard()
-  .text("Screen lagi", "screen")
-  .text("Selesai", "done")
-  .row()
-  .url("Bagikan bot", BOT_SHARE_LINK);
+export function afterResultKeyboard(resultCount: number): InlineKeyboard {
+  const keyboard = new InlineKeyboard()
+    .text("Upload CV lain", "next_cv")
+    .text("Ganti JD", "change_jd")
+    .row();
+
+  if (resultCount >= 2) {
+    keyboard.text("Lihat ranking", "ranking").text("Selesai", "done").row();
+  } else {
+    keyboard.text("Selesai", "done").row();
+  }
+
+  keyboard.text("Clear chat", "clear");
+  return keyboard;
+}
 
 export const START_MESSAGE = [
-  "Halo! Selamat datang di <b>CV Screener</b>.",
-  "Siap bantu cek seberapa cocok CV kamu dengan job description.",
+  "Halo, HR! Selamat datang di <b>CV Screener</b>.",
+  "Cek cocok tidaknya CV kandidat vs job posting — score + keyword missing.",
   "",
-  "<b>Cara pakai</b>",
-  "1. Ketuk <b>Mulai screening</b> atau /screen",
-  "2. Paste JD <b>atau</b> kirim link lowongan (career page publik)",
-  "3. Upload CV dalam format PDF",
+  "Cara pakai: <b>Mulai screening</b> → paste JD → upload CV PDF.",
+  "Satu JD bisa untuk banyak CV + ranking.",
   "",
-  "Hasilnya: skor match + keyword yang cocok / kurang.",
+  "<i>Ini first-pass filter, bukan keputusan hiring final.</i>",
   BRANDING_FOOTER,
 ].join("\n");
 
 export const HELP_MESSAGE = [
   "<b>Bantuan CV Screener</b>",
   "",
-  "/screen — mulai screening",
+  "/screen — mulai screening (JD baru)",
   "/done — selesai memakai bot (thank you)",
   "/cancel — batalkan session",
+  "/clear — hapus pesan bot + reset session",
   "/help — bantuan singkat",
   "",
-  "Step 1 bisa paste teks JD atau kirim link career page publik.",
+  "Step 1: paste teks JD atau kirim link career page publik.",
   "LinkedIn/JobStreet sering terblokir — kalau gagal, paste JD manual.",
+  "",
+  "Setelah score: <b>Upload CV lain</b> memakai JD yang sama, atau <b>Ganti JD</b>.",
+  "Score dari keyword overlap (rule-based), bukan AI.",
+  "",
+  "Privacy: CV PDF diproses di memori dan tidak disimpan ke server sebagai file.",
   BRANDING_FOOTER,
 ].join("\n");
 
 export const ASK_JD_MESSAGE = [
   "<b>Step 1/2 — Job description</b>",
-  "Paste teks JD <b>atau</b> kirim link lowongan (career page publik).",
+  "Paste teks JD <b>atau</b> kirim link job posting (career page publik).",
   "",
-  "Contoh link yang biasanya bisa dibaca: Greenhouse, Lever, Ashby, /careers perusahaan.",
   "Tip: kalau paste teks, cukup bagian <i>Requirements / Qualifications</i>.",
 ].join("\n");
 
 export const ASK_CV_MESSAGE = [
-  "<b>Step 2/2 — CV</b>",
-  "JD tersimpan. Kirim CV sebagai file <b>PDF</b>.",
+  "<b>Step 2/2 — CV kandidat</b>",
+  "JD tersimpan. Kirim CV kandidat sebagai file <b>PDF</b>.",
+  "",
+  "<i>Privacy: CV diproses di memori, tidak disimpan.</i>",
+].join("\n");
+
+/** Soft prompt when HR screens another CV against the same JD. */
+export const ASK_CV_NEXT_MESSAGE = [
+  "<b>CV kandidat berikutnya</b>",
+  "JD session ini masih dipakai. Kirim CV lain sebagai file <b>PDF</b>.",
+  "",
+  "<i>Privacy: CV diproses di memori, tidak disimpan.</i>",
 ].join("\n");
 
 export const IDLE_HINT_MESSAGE = [
-  "Halo! Bot ini khusus untuk <b>screening CV vs job description</b>.",
-  "Pesan tadi di luar alur screening — tidak masalah.",
+  "Halo, HR! Bot ini untuk screening <b>CV kandidat vs job posting</b>.",
+  "Pesan tadi di luar alur — tidak masalah.",
   "",
-  "Untuk mulai: ketuk <b>Mulai screening</b> atau kirim /screen",
-  "Butuh panduan? Ketuk <b>Bantuan</b> atau /help",
+  "Mulai: ketuk <b>Mulai screening</b> atau /screen",
+  "Bantuan: ketuk <b>Bantuan</b> atau /help",
   BRANDING_FOOTER,
 ].join("\n");
 
 export const INVALID_JD_MESSAGE = [
   "<b>Step 1/2 — Job description</b>",
-  "Pesan ini belum terlihat seperti JD.",
+  "Pesan ini belum terlihat seperti JD / job posting.",
   "",
   "Paste teks <i>Requirements / Qualifications</i>, atau kirim link career page publik (http/https).",
   "Kalau link gagal dibaca, paste JD manual saja — atau ketuk <b>Batal</b>.",
 ].join("\n");
 
 export const ASK_CV_PDF_ONLY_MESSAGE = [
-  "<b>Step 2/2 — CV</b>",
+  "<b>Step 2/2 — CV kandidat</b>",
   "Kirim CV sebagai file <b>PDF</b> (bukan teks, foto, sticker, atau voice).",
   "",
   "Di Telegram: lampirkan file → pilih PDF, atau ketuk <b>Batal</b>.",
@@ -107,35 +120,45 @@ export const CANCEL_MESSAGE = [
   "Kalau mau coba lagi, ketuk <b>Mulai screening</b>.",
   "",
   "Thank you for using <b>CV Screener</b>.",
-  "Semoga segera ketemu role yang pas.",
+  "Semoga hiring-nya cepat dan ketemu kandidat yang pas.",
   BRANDING_FOOTER,
 ].join("\n");
 
 export const DONE_MESSAGE = [
-  "<b>Done using CV Screener</b>",
-  "Screening session sudah selesai.",
-  "",
   "Thank you for using <b>CV Screener</b>!",
-  "Semoga apply-nya lancar dan segera dapat kabar baik.",
+  "Semoga hiring-nya cepat dan ketemu kandidat yang pas.",
   BRANDING_FOOTER,
 ].join("\n");
 
-const CLOSING_BLOCK = [
+export const CLEAR_MESSAGE = [
+  "<b>Chat cleared</b>",
+  "Pesan bot dihapus dan session di-reset.",
   "",
-  "<b>Done using CV Screener</b>",
-  "Thank you for using <b>CV Screener</b>!",
-  "Semoga apply-nya lancar.",
+  "Pesan dari kamu tidak bisa dihapus bot — clear history di profil chat jika perlu.",
   BRANDING_FOOTER,
 ].join("\n");
 
-export function formatScoreMessage(result: ScoreResult): string {
+function scoreBandLabel(score: number): string {
+  if (score <= 39) {
+    return "Weak match — gap keyword besar; pertimbangkan skip atau screening ringan";
+  }
+  if (score <= 69) {
+    return "Review — cocok sebagian; cek missing di interview";
+  }
+  return "Strong interview — match kuat; tetap verifikasi missing penting";
+}
+
+export function formatScoreMessage(result: ScoreResult, fileName = "CV"): string {
+  const fileLine = `File: <b>${escapeHtml(fileName)}</b>`;
+
   if (result.totalKeywords === 0) {
     return [
       "<b>Hasil screening</b>",
+      fileLine,
       "Tidak ada keyword yang cukup dari JD.",
       "",
-      "Coba paste bagian Requirements yang lebih spesifik, lalu screen lagi.",
-      CLOSING_BLOCK,
+      "Coba paste bagian Requirements yang lebih spesifik, atau <b>Ganti JD</b>.",
+      BRANDING_FOOTER,
     ].join("\n");
   }
 
@@ -148,10 +171,17 @@ export function formatScoreMessage(result: ScoreResult): string {
       ? result.missing.map((k) => `• ${escapeHtml(k)}`).join("\n")
       : "• (tidak ada)";
 
+  const tip =
+    result.missing.length > 0
+      ? "Tip HR: missing keywords bisa jadi pertanyaan interview — jangan anggap score sebagai keputusan final."
+      : "Tip HR: keyword JD sudah banyak yang match. Tetap verifikasi pengalaman di interview.";
+
   return [
     "<b>Hasil screening</b>",
+    fileLine,
     `Score: <b>${result.score}%</b>`,
     `<i>${result.matched.length}/${result.totalKeywords} keywords dari JD</i>`,
+    escapeHtml(scoreBandLabel(result.score)),
     "",
     "<b>Matched</b>",
     matched,
@@ -159,7 +189,35 @@ export function formatScoreMessage(result: ScoreResult): string {
     "<b>Missing</b>",
     missing,
     "",
-    "Tip: tambahkan keyword yang missing di CV (jika relevan), lalu screen lagi.",
-    CLOSING_BLOCK,
+    tip,
+    BRANDING_FOOTER,
+  ].join("\n");
+}
+
+const RANKING_DISPLAY_LIMIT = 10;
+
+export function formatRankingMessage(results: ScreenedResult[]): string {
+  if (results.length === 0) {
+    return [
+      "<b>Ranking kandidat (JD session ini)</b>",
+      "Belum ada CV yang di-screen di session ini.",
+      BRANDING_FOOTER,
+    ].join("\n");
+  }
+
+  const sorted = [...results].sort((a, b) => b.score - a.score);
+  const shown = sorted.slice(0, RANKING_DISPLAY_LIMIT);
+  const lines = shown.map(
+    (r, i) => `${i + 1}. ${escapeHtml(r.fileName)} — <b>${r.score}%</b>`,
+  );
+  const extra = sorted.length - shown.length;
+
+  return [
+    "<b>Ranking kandidat (JD session ini)</b>",
+    ...lines,
+    ...(extra > 0 ? [`… +${extra} lagi`] : []),
+    "",
+    "<i>Ini first-pass keyword filter, bukan keputusan hiring final.</i>",
+    BRANDING_FOOTER,
   ].join("\n");
 }

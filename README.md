@@ -1,6 +1,6 @@
 # CV Screener (`@cv_screener_bot`)
 
-Telegram bot MVP yang membandingkan **job description (JD)** dengan **CV PDF** memakai keyword matching (rule-based, tanpa AI).
+Telegram bot untuk **HR / hiring manager**: bandingkan **job description (JD)** dengan **CV kandidat (PDF)** memakai keyword matching (rule-based, tanpa AI). Satu JD bisa dipakai untuk banyak CV, lalu lihat ranking di session.
 
 ## Setup
 
@@ -35,15 +35,18 @@ Biarkan terminal tetap terbuka. Bot hanya online selama process ini berjalan.
 1. Buka [@cv_screener_bot](https://t.me/cv_screener_bot)
 2. Kirim `/start`
 3. Kirim `/screen`
-4. Paste teks JD **atau** kirim link lowongan (career page publik)
-5. Upload CV sebagai file **PDF**
+4. Paste teks JD **atau** kirim link job posting (career page publik)
+5. Upload CV kandidat sebagai file **PDF**
 6. Terima match score + keyword matched / missing
+7. Opsional: **Upload CV lain** (JD sama), **Lihat ranking**, atau **Ganti JD**
 
 Link yang biasanya bisa dibaca: Greenhouse, Lever, Ashby, halaman `/careers` perusahaan.  
 LinkedIn/JobStreet sering gagal (login/anti-bot) — kalau begitu, paste JD manual.
 
 Perintah lain:
 
+- `/done` — selesai session
+- `/clear` — hapus pesan bot + reset session
 - `/cancel` — batalkan session
 - `/help` — bantuan singkat
 
@@ -68,20 +71,22 @@ Di @BotFather → `/mybots` → CV Screener:
 
 **About**
 ```text
-Cek kecocokan CV vs job description dalam hitungan detik.
+Screen CV kandidat vs job posting — skor match dalam hitungan detik.
 ```
 
 **Description**
 ```text
-CV Screener membandingkan JD yang kamu paste dengan CV PDF, lalu memberi skor match + keyword yang cocok/kurang.
+CV Screener membantu HR membandingkan job description dengan CV kandidat (PDF), lalu memberi skor match + keyword yang cocok/kurang.
 
-Cara pakai: /screen → paste JD → upload CV PDF.
+Cara pakai: /screen → paste JD → upload CV PDF → Upload CV lain (JD sama) atau lihat ranking.
 ```
 
 **Commands** (atau biarkan bot set otomatis saat start)
 ```text
 start - Mulai & cara pakai
-screen - Bandingkan JD dengan CV
+screen - Mulai screening JD vs CV
+done - Selesai session
+clear - Hapus pesan bot + reset
 cancel - Batalkan session
 help - Bantuan singkat
 ```

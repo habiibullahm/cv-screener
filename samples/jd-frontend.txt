@@ -1,0 +1,10 @@
+Frontend Engineer
+
+We are hiring a Frontend Engineer.
+
+Requirements / Qualifications:
+- Strong experience with React and TypeScript
+- Experience with Next.js
+- Familiar with CSS and responsive design
+- Comfortable with Git and code review
+- Plus: GraphQL, Jest, and CI/CD experience
