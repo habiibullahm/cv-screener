@@ -1,0 +1,66 @@
+%PDF-1.4
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
+4 0 obj<< /Length 981 >>stream
+BT
+/F1 11 Tf
+50 750 Td
+14 TL
+(Dimas Wijaya - Senior Full-Stack Developer) Tj
+T*
+(Email: dimas.wijaya@example.com) Tj
+T*
+() Tj
+T*
+(Summary) Tj
+T*
+(Senior full-stack developer with 5 years building production enterprise systems.) Tj
+T*
+() Tj
+T*
+(Skills) Tj
+T*
+(Java, Spring Boot, React, TypeScript, REST APIs, JWT, PostgreSQL, Redis,) Tj
+T*
+(Docker, CI/CD, JUnit, Mockito, Kubernetes, GraphQL, React Native) Tj
+T*
+() Tj
+T*
+(Experience) Tj
+T*
+(Senior Full-Stack Developer - FintechHub \(2021-Present\)) Tj
+T*
+(- Built Java Spring Boot services and secure REST APIs with JWT and RBAC) Tj
+T*
+(- Delivered React and TypeScript dashboards for business users) Tj
+T*
+(- Tuned PostgreSQL queries and used Redis for application caching) Tj
+T*
+(- Wrote JUnit and Mockito tests and maintained Docker CI/CD pipelines) Tj
+T*
+(- Collaborated with product, QA, and platform teams) Tj
+T*
+(- Operated Kubernetes workloads in production) Tj
+T*
+() Tj
+T*
+(Education) Tj
+T*
+(B.Sc. Computer Science) Tj
+ET
+endstream
+endobj
+5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000056 00000 n 
+0000000111 00000 n 
+0000000233 00000 n 
+0000001263 00000 n 
+trailer<< /Size 6 /Root 1 0 R >>
+startxref
+1331
+%%EOF

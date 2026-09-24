@@ -57,6 +57,13 @@ Requirements / Qualifications:
 - Plus: GraphQL, Jest, and CI/CD experience
 `;
 
+const fullstackJd = `Full-Stack Software Developer
+
+Required skills: Java, Spring Boot, React, TypeScript, JavaScript, REST APIs, JWT, PostgreSQL, Redis, Docker, CI/CD, JUnit, Mockito, and cross-functional teamwork.
+
+Preferred skills: Kubernetes, GraphQL, and React Native.
+`;
+
 const cvs: Record<string, string[]> = {
   "cv-strong-frontend.pdf": [
     "Alya Pratama - Frontend Engineer",
@@ -97,7 +104,69 @@ const cvs: Record<string, string[]> = {
     "Education",
     "Diploma in Information Technology",
   ],
-  "cv-weak-frontend.pdf": [
+  "cv-fullstack-strong.pdf": [
+    "Dimas Wijaya - Senior Full-Stack Developer",
+    "Email: dimas.wijaya@example.com",
+    "",
+    "Summary",
+    "Senior full-stack developer with 5 years building production enterprise systems.",
+    "",
+    "Skills",
+    "Java, Spring Boot, React, TypeScript, REST APIs, JWT, PostgreSQL, Redis,",
+    "Docker, CI/CD, JUnit, Mockito, Kubernetes, GraphQL, React Native",
+    "",
+    "Experience",
+    "Senior Full-Stack Developer - FintechHub (2021-Present)",
+    "- Built Java Spring Boot services and secure REST APIs with JWT and RBAC",
+    "- Delivered React and TypeScript dashboards for business users",
+    "- Tuned PostgreSQL queries and used Redis for application caching",
+    "- Wrote JUnit and Mockito tests and maintained Docker CI/CD pipelines",
+    "- Collaborated with product, QA, and platform teams",
+    "- Operated Kubernetes workloads in production",
+    "",
+    "Education",
+    "B.Sc. Computer Science",
+  ],
+  "cv-fullstack-medium.pdf": [
+    "Nadia Putri - Full-Stack Developer",
+    "Email: nadia.putri@example.com",
+    "",
+    "Summary",
+    "Full-stack developer with 3 years of experience building internal web applications.",
+    "",
+    "Skills",
+    "Java, Spring Boot, React, TypeScript, REST APIs, PostgreSQL, Docker, JUnit, Git",
+    "",
+    "Experience",
+    "Full-Stack Developer - RetailWorks (2022-Present)",
+    "- Developed Spring Boot REST APIs and React TypeScript interfaces",
+    "- Worked with PostgreSQL and wrote JUnit tests",
+    "- Used Docker in local development and GitHub Actions for CI",
+    "- Collaborated with a small product team",
+    "",
+    "Education",
+    "B.Sc. Information Systems",
+  ],
+  "cv-fullstack-transition.pdf": [
+    "Raka Pratama - Software Engineer",
+    "Email: raka.pratama@example.com",
+    "",
+    "Summary",
+    "Software engineer with backend and frontend project experience.",
+    "",
+    "Skills",
+    "Node.js, JavaScript, React, MongoDB, Express, Docker, Git, GraphQL",
+    "",
+    "Experience",
+    "Software Engineer - CodeCraft (2023-Present)",
+    "- Built React JavaScript interfaces and Node.js APIs",
+    "- Used MongoDB and GraphQL for product features",
+    "- Containerized services with Docker",
+    "- Participated in code reviews with the engineering team",
+    "",
+    "Education",
+    "B.Sc. Information Technology",
+  ],  "cv-weak-frontend.pdf": [
     "Citra Wulandari - Backend Engineer",
     "Email: citra.wulandari@example.com",
     "",
@@ -119,6 +188,7 @@ const cvs: Record<string, string[]> = {
 };
 
 writeFileSync(join(outDir, "jd-frontend.txt"), jd, "utf8");
+writeFileSync(join(outDir, "jd-fullstack.txt"), fullstackJd, "utf8");
 for (const [name, lines] of Object.entries(cvs)) {
   writeFileSync(join(outDir, name), buildPdf(lines), "utf8");
 }

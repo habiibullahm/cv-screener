@@ -1,6 +1,6 @@
 # CV Screener (`@cv_screener_bot`)
 
-Telegram bot untuk **HR / hiring manager**: bandingkan **job description (JD)** dengan **CV kandidat (PDF)** memakai keyword matching (rule-based, tanpa AI). Satu JD bisa dipakai untuk banyak CV, lalu lihat ranking di session.
+Telegram bot untuk **HR / hiring manager**: bandingkan **job description (JD)** dengan **CV kandidat (PDF)** memakai deterministic keyword matching. Optional Groq OpenAI-compatible AI explanation hanya menjelaskan hasil; score tetap rule-based. Satu JD bisa dipakai untuk banyak CV, lalu lihat ranking di session.
 
 ## Setup
 
@@ -20,6 +20,10 @@ Isi `.env`:
 
 ```env
 BOT_TOKEN=your_telegram_bot_token_here
+GROQ_API_KEY=  # Create at https://console.groq.com/keys
+GROQ_MODEL=openai/gpt-oss-20b
+GROQ_BASE_URL=https://api.groq.com/openai/v1
+GROQ_TIMEOUT_MS=4000
 ```
 
 3. Jalankan bot (polling lokal):
@@ -37,7 +41,7 @@ Biarkan terminal tetap terbuka. Bot hanya online selama process ini berjalan.
 3. Kirim `/screen`
 4. Paste teks JD **atau** kirim link job posting (career page publik)
 5. Upload CV kandidat sebagai file **PDF**
-6. Terima match score + keyword matched / missing
+6. Terima match score + keyword matched / missing + optional explanation
 7. Opsional: **Upload CV lain** (JD sama), **Lihat ranking**, atau **Ganti JD**
 
 Link yang biasanya bisa dibaca: Greenhouse, Lever, Ashby, halaman `/careers` perusahaan.  
@@ -119,5 +123,10 @@ Tambahkan Botpic (logo 512×512) lewat Edit Bot → Botpic.
 ## Catatan
 
 - Hanya PDF berbasis teks. PDF hasil scan (gambar) belum didukung (tanpa OCR).
-- Session tersimpan di memori; restart bot menghapus session aktif.
+- Session tersimpan di memori; idle lebih dari 1 jam dihapus; restart bot menghapus session aktif.
 - Di Railway, `BOT_TOKEN` diisi lewat Variables (tanpa file `.env`).
+
+
+## Saved JD
+
+Dengan `DATABASE_URL`, user dapat menyimpan JD aktif menggunakan `/savejd Nama JD`, termasuk JD yang diimpor dari linked post. Gunakan `/myjd` untuk memakai atau menghapus template. Snapshot JD disimpan per akun dan tidak berubah ketika halaman sumber berubah; CV tetap tidak dipersist.

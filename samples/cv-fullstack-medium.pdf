@@ -1,0 +1,60 @@
+%PDF-1.4
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
+4 0 obj<< /Length 735 >>stream
+BT
+/F1 11 Tf
+50 750 Td
+14 TL
+(Nadia Putri - Full-Stack Developer) Tj
+T*
+(Email: nadia.putri@example.com) Tj
+T*
+() Tj
+T*
+(Summary) Tj
+T*
+(Full-stack developer with 3 years of experience building internal web applications.) Tj
+T*
+() Tj
+T*
+(Skills) Tj
+T*
+(Java, Spring Boot, React, TypeScript, REST APIs, PostgreSQL, Docker, JUnit, Git) Tj
+T*
+() Tj
+T*
+(Experience) Tj
+T*
+(Full-Stack Developer - RetailWorks \(2022-Present\)) Tj
+T*
+(- Developed Spring Boot REST APIs and React TypeScript interfaces) Tj
+T*
+(- Worked with PostgreSQL and wrote JUnit tests) Tj
+T*
+(- Used Docker in local development and GitHub Actions for CI) Tj
+T*
+(- Collaborated with a small product team) Tj
+T*
+() Tj
+T*
+(Education) Tj
+T*
+(B.Sc. Information Systems) Tj
+ET
+endstream
+endobj
+5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000056 00000 n 
+0000000111 00000 n 
+0000000233 00000 n 
+0000001017 00000 n 
+trailer<< /Size 6 /Root 1 0 R >>
+startxref
+1085
+%%EOF

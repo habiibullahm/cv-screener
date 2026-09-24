@@ -1,3 +1,14 @@
+FROM node:20-slim AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+
 FROM node:20-slim
 
 ENV TZ=Asia/Jakarta \
@@ -5,11 +16,9 @@ ENV TZ=Asia/Jakarta \
 
 WORKDIR /app
 
-# Dependencies dulu supaya layer ter-cache
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY tsconfig.json ./
-COPY src ./src
+COPY --from=build /app/dist ./dist
 
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]

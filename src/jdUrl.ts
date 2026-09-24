@@ -360,6 +360,11 @@ export async function fetchJdFromUrl(urlString: string): Promise<string> {
     const response = await fetchWithPinnedRedirects(url, controller.signal);
 
     if (response.status < 200 || response.status >= 300) {
+      if (response.status === 401 || response.status === 403) {
+        const host = response.finalUrl.hostname.toLowerCase();
+        const siteName = host.includes("jobstreet") ? "JobStreet" : "situs ini";
+        throw new JdFetchError(`${siteName} menolak akses otomatis ke halaman ini (HTTP ${response.status}). Paste teks JD secara manual.`);
+      }
       throw new JdFetchError(`Gagal mengambil halaman (HTTP ${response.status}).`);
     }
 

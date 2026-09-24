@@ -8,8 +8,12 @@ export interface ScreenedResult {
 export interface ChatSession {
   step: SessionStep;
   jdText?: string;
+  jdSourceType?: "pasted" | "linked_post";
+  jdSourceUrl?: string;
+  jdTemplateId?: string;
   /** In-memory scores for the active JD (cleared on new JD / cancel / done). */
   results?: ScreenedResult[];
+  lastActivityAt: number;
 }
 
 export interface ScoreResult {

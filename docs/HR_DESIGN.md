@@ -5,7 +5,7 @@
 **Goal:** First-pass filter — cek cepat kecocokan CV kandidat vs 1 job posting (JD)  
 **Channel:** Telegram only  
 **Language:** Campur ID + EN (sama seperti bot sekarang)  
-**Scoring:** Rule-based keyword match (no AI)
+**Scoring:** Deterministic rule-based keyword match; optional AI explanation only
 
 > Status: design + implemented in bot (Phase 0–2). Lihat gap table di bagian akhir.
 
@@ -211,7 +211,7 @@ Ini first-pass keyword filter, bukan keputusan hiring final.
 - Hanya CV di session chat yang sama + JD yang sama
 - Urut score descending
 - Max tampilkan ~10 baris (sisanya: “+N lagi — screen selesai untuk ringkas”)
-- Tidak persist ke database; hilang saat `/cancel`, `/done`, atau process restart
+- CV tetap tidak dipersist; JD dapat disimpan sebagai template PostgreSQL milik user melalui `/savejd` dan dipakai ulang lewat `/myjd`
 
 ---
 
@@ -235,7 +235,7 @@ Ini first-pass keyword filter, bukan keputusan hiring final.
 - Perintah: `/screen`, `/done`, `/cancel`, `/help`
 - JD paste atau link publik
 - Privacy: CV diproses di memori, tidak disimpan
-- Batasan: rule-based keywords; bukan AI scoring; bukan ATS lengkap
+- Batasan: deterministic keyword score; AI hanya menjelaskan; bukan ATS lengkap
 
 ---
 
