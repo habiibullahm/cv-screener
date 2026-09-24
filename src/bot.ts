@@ -20,6 +20,14 @@ import {
 } from "./messages.js";
 import { extractTextFromPdf } from "./pdf.js";
 import { scoreCvAgainstJd } from "./scorer.js";
+import { explainScore } from "./explanation.js";
+import {
+  deleteJdTemplate,
+  getJdTemplate,
+  isStorageConfigured,
+  listJdTemplates,
+  saveJdTemplate,
+} from "./storage.js";
 import {
   SecurePdfError,
   assertAllowedCvFileSize,
@@ -92,6 +100,51 @@ function trackId(chatId: number, messageId: number): void {
   trackBotMessage(chatId, messageId);
 }
 
+function telegramUserId(ctx: Context): string | undefined {
+  return ctx.from?.id.toString();
+}
+
+function commandArgument(ctx: Context): string {
+  const text = ctx.message?.text ?? "";
+  return text.replace(/^\/\w+(?:@\w+)?\s*/u, "").trim();
+}
+
+function templateListMessage(count: number): string {
+  if (count === 0) {
+    return [
+      "<b>Saved JD</b>",
+      "Belum ada JD tersimpan.",
+      "Mulai screening, lalu gunakan <code>/savejd Nama JD</code>.",
+    ].join("\n");
+  }
+  return [
+    "<b>Saved JD</b>",
+    "Pilih template untuk mengunci snapshot JD dan mulai screening:",
+  ].join("\n");
+}
+function templateDetailsMessage(template: {
+  name: string;
+  sourceType: "pasted" | "linked_post";
+  sourceUrl?: string;
+  jdText: string;
+  createdAt: string;
+}): string {
+  const source = template.sourceType === "linked_post" ? "Linked post" : "Paste manual";
+  const sourceLine = template.sourceUrl
+    ? `Sumber: ${escapeHtml(template.sourceUrl)}`
+    : `Sumber: ${source}`;
+  const jdText = template.jdText.length > 3400
+    ? `${template.jdText.slice(0, 3400)}\n… (dipotong)`
+    : template.jdText;
+  return [
+    `<b>JD: ${escapeHtml(template.name)}</b>`,
+    `Source type: ${escapeHtml(source)}`,
+    sourceLine,
+    `Dibuat: ${escapeHtml(new Date(template.createdAt).toLocaleString("id-ID"))}`,
+    "",
+    `<pre>${escapeHtml(jdText)}</pre>`,
+  ].join("\n");
+}
 async function replyIdleHint(ctx: Context): Promise<void> {
   await replyTracked(ctx, IDLE_HINT_MESSAGE, replyOpts);
 }
@@ -175,6 +228,67 @@ export function createBot(token: string): Bot {
     await beginScreen(ctx);
   });
 
+  bot.command("savejd", async (ctx) => {
+    const chatId = ctx.chat?.id;
+    const userId = telegramUserId(ctx);
+    const name = commandArgument(ctx);
+    const session = chatId === undefined ? undefined : getSession(chatId);
+
+    if (!userId || !chatId || !session?.jdText) {
+      await replyTracked(ctx, "Belum ada JD aktif. Mulai dengan <code>/screen</code>.", replyOpts);
+      return;
+    }
+    if (!isStorageConfigured()) {
+      await replyTracked(ctx, "Penyimpanan JD belum dikonfigurasi oleh admin.", replyOpts);
+      return;
+    }
+    if (name.length < 1 || name.length > 120) {
+      await replyTracked(ctx, "Format: <code>/savejd Nama JD</code> (1–120 karakter).", replyOpts);
+      return;
+    }
+
+    try {
+      const template = await saveJdTemplate({
+        telegramUserId: userId,
+        name,
+        sourceType: session.jdSourceType ?? "pasted",
+        sourceUrl: session.jdSourceUrl,
+        jdText: session.jdText,
+      });
+      await replyTracked(
+        ctx,
+        template
+          ? `JD <b>${escapeHtml(template.name)}</b> tersimpan dan dikunci. Snapshot ini dipakai untuk screening berikutnya.`
+          : "Penyimpanan JD belum aktif.",
+        replyOpts,
+      );
+    } catch {
+      await replyTracked(ctx, "JD gagal disimpan. Coba lagi nanti.", replyOpts);
+    }
+  });
+
+  bot.command("myjd", async (ctx) => {
+    const userId = telegramUserId(ctx);
+    if (!userId || !isStorageConfigured()) {
+      await replyTracked(ctx, "Saved JD belum tersedia. Admin perlu mengatur database.", replyOpts);
+      return;
+    }
+    try {
+      const templates = await listJdTemplates(userId);
+      const keyboard = new InlineKeyboard();
+      for (const template of templates) {
+        keyboard.text(`Detail: ${template.name.slice(0, 30)}`, `viewjd:${template.id}`).row();
+        keyboard.text(`Gunakan: ${template.name.slice(0, 30)}`, `usejd:${template.id}`).row();
+        keyboard.text(`Hapus: ${template.name.slice(0, 30)}`, `deletejd:${template.id}`).row();
+      }
+      await replyTracked(ctx, templateListMessage(templates.length), {
+        ...replyOpts,
+        reply_markup: keyboard,
+      });
+    } catch {
+      await replyTracked(ctx, "Saved JD gagal dibaca. Coba lagi nanti.", replyOpts);
+    }
+  });
   bot.command("cancel", async (ctx) => {
     await cancelScreen(ctx);
   });
@@ -212,6 +326,76 @@ export function createBot(token: string): Bot {
     await clearChat(ctx);
   });
 
+  bot.command("showjd", async (ctx) => {
+    const userId = telegramUserId(ctx);
+    const templateId = commandArgument(ctx);
+    if (!userId || !isStorageConfigured() || !templateId) {
+      await replyTracked(ctx, "Format: <code>/showjd TEMPLATE_ID</code>. Gunakan <code>/myjd</code> untuk melihat tombol detail.", replyOpts);
+      return;
+    }
+    try {
+      const template = await getJdTemplate(userId, templateId);
+      await replyTracked(
+        ctx,
+        template ? templateDetailsMessage(template) : "JD tidak ditemukan atau bukan milik akun ini.",
+        replyOpts,
+      );
+    } catch {
+      await replyTracked(ctx, "Detail JD gagal dimuat. Coba lagi nanti.", replyOpts);
+    }
+  });
+
+  bot.callbackQuery(/^viewjd:(.+)$/u, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const userId = telegramUserId(ctx);
+    const templateId = ctx.match?.[1];
+    if (!userId || !templateId) return;
+    try {
+      const template = await getJdTemplate(userId, templateId);
+      await replyTracked(
+        ctx,
+        template ? templateDetailsMessage(template) : "JD tidak ditemukan atau bukan milik akun ini.",
+        replyOpts,
+      );
+    } catch {
+      await replyTracked(ctx, "Detail JD gagal dimuat. Coba lagi nanti.", replyOpts);
+    }
+  });
+  bot.callbackQuery(/^usejd:(.+)$/u, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const chatId = ctx.chat?.id;
+    const userId = telegramUserId(ctx);
+    const templateId = ctx.match?.[1];
+    if (!chatId || !userId || !templateId) return;
+    try {
+      const template = await getJdTemplate(userId, templateId);
+      if (!template) {
+        await replyTracked(ctx, "JD tidak ditemukan atau bukan milik akun ini.", replyOpts);
+        return;
+      }
+      setStep(chatId, "awaiting_cv", template.jdText, {
+        type: template.sourceType,
+        url: template.sourceUrl,
+        templateId: template.id,
+      });
+      await replyTracked(ctx, ASK_CV_MESSAGE, sessionReplyOpts);
+    } catch {
+      await replyTracked(ctx, "JD gagal dimuat. Coba lagi nanti.", replyOpts);
+    }
+  });
+
+  bot.callbackQuery(/^deletejd:(.+)$/u, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const userId = telegramUserId(ctx);
+    const templateId = ctx.match?.[1];
+    if (!userId || !templateId) return;
+    try {
+      const deleted = await deleteJdTemplate(userId, templateId);
+      await replyTracked(ctx, deleted ? "JD dihapus." : "JD tidak ditemukan.", replyOpts);
+    } catch {
+      await replyTracked(ctx, "JD gagal dihapus. Coba lagi nanti.", replyOpts);
+    }
+  });
   bot.callbackQuery("next_cv", async (ctx) => {
     await ctx.answerCallbackQuery();
     const chatId = ctx.chat?.id;
@@ -268,7 +452,7 @@ export function createBot(token: string): Bot {
         trackId(chatId, status.message_id);
         try {
           const jdText = await fetchJdFromUrl(text);
-          setStep(chatId, "awaiting_cv", jdText);
+          setStep(chatId, "awaiting_cv", jdText, { type: "linked_post", url: text });
           await ctx.api.editMessageText(
             chatId,
             status.message_id,
@@ -313,7 +497,7 @@ export function createBot(token: string): Bot {
         return;
       }
 
-      setStep(chatId, "awaiting_cv", text);
+      setStep(chatId, "awaiting_cv", text, { type: "pasted" });
       await replyTracked(ctx, ASK_CV_MESSAGE, {
         parse_mode: "HTML",
         reply_markup: cancelKeyboard,
@@ -408,6 +592,11 @@ export function createBot(token: string): Bot {
       }
 
       const result = scoreCvAgainstJd(session.jdText, cvText);
+      const explanation = await explainScore(result, {
+        jdText: session.jdText,
+        cvText,
+        onError: (reason) => console.warn("AI explanation unavailable", { reason }),
+      });
       addScreenedResult(chatId, { fileName, score: result.score });
       keepJdAwaitingCv(chatId);
       const resultCount = getSession(chatId).results?.length ?? 0;
@@ -415,7 +604,7 @@ export function createBot(token: string): Bot {
       await ctx.api.editMessageText(
         chatId,
         status.message_id,
-        formatScoreMessage(result, fileName),
+        formatScoreMessage(result, fileName, explanation),
         {
           parse_mode: "HTML",
           reply_markup: afterResultKeyboard(resultCount),
@@ -435,11 +624,7 @@ export function createBot(token: string): Bot {
 
       // Never log file contents, paths with token, or raw buffers.
       console.error("Failed to process CV", {
-        chatId,
-        fileId,
-        fileUniqueId,
         errorName: error instanceof Error ? error.name : "unknown",
-        errorMessage: error instanceof Error ? error.message : String(error),
       });
 
       try {
@@ -453,7 +638,9 @@ export function createBot(token: string): Bot {
   });
 
   bot.catch((err) => {
-    console.error("Bot error", err);
+    console.error("Bot error", {
+      errorName: err.error instanceof Error ? err.error.name : "unknown",
+    });
   });
 
   return bot;

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { createBot } from "./bot.js";
+import { ensureStorageSchema } from "./storage.js";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const envPath = path.join(projectRoot, ".env");
@@ -27,11 +28,21 @@ if (token.includes("your_telegram_bot_token_here") || !token.includes(":")) {
   process.exit(1);
 }
 
+try {
+  await ensureStorageSchema();
+} catch {
+  console.error("Database schema initialization failed.");
+  process.exit(1);
+}
+
 const bot = createBot(token);
 
 await bot.api.setMyCommands([
   { command: "start", description: "Mulai & cara pakai" },
   { command: "screen", description: "Bandingkan JD dengan CV" },
+  { command: "savejd", description: "Simpan dan kunci JD aktif" },
+  { command: "myjd", description: "Lihat JD tersimpan" },
+  { command: "showjd", description: "Lihat detail saved JD" },
   { command: "done", description: "Selesai + thank you" },
   { command: "cancel", description: "Batalkan session" },
   { command: "help", description: "Bantuan singkat" },

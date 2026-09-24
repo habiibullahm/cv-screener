@@ -27,15 +27,15 @@ Tool Telegram untuk **HR / hiring manager** mengecek kecocokan kasar antara satu
 ## Non-functional requirements
 
 - Node.js 20+, TypeScript, grammy, long polling
-- Rule-based scoring only (no AI / LLM)
-- No database; in-memory session per `chatId`
+- Deterministic rule-based scoring is the source of truth; optional AI explanation cannot change it
+- Optional PostgreSQL persistence for user-owned saved JD templates; active CV screening session remains in-memory per `chatId` and expires after one hour
 - Secrets via `.env` (`BOT_TOKEN`), never committed
 - Local-first MVP (no webhook deploy required)
 - CV PDF processed in memory only (not written to disk)
 
 ## Out of scope
 
-- AI scoring
+- AI explanation that changes score or requirements
 - Full ATS (pipeline, notes, team seats)
 - Persistent history / export CSV
 - DOCX / image OCR

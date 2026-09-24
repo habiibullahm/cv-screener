@@ -1,4 +1,5 @@
 import { InlineKeyboard } from "grammy";
+import type { AiExplanation } from "./explanation.js";
 import type { ScoreResult, ScreenedResult } from "./types.js";
 
 export const BOT_USERNAME = "cv_screener_bot";
@@ -54,6 +55,9 @@ export const HELP_MESSAGE = [
   "<b>Bantuan CV Screener</b>",
   "",
   "/screen — mulai screening (JD baru)",
+  "/savejd Nama JD — simpan dan kunci JD aktif",
+  "/myjd — lihat JD tersimpan dari paste atau linked post",
+  "/showjd TEMPLATE_ID — lihat isi snapshot JD",
   "/done — selesai memakai bot (thank you)",
   "/cancel — batalkan session",
   "/clear — hapus pesan bot + reset session",
@@ -63,6 +67,7 @@ export const HELP_MESSAGE = [
   "LinkedIn/JobStreet sering terblokir — kalau gagal, paste JD manual.",
   "",
   "Setelah score: <b>Upload CV lain</b> memakai JD yang sama, atau <b>Ganti JD</b>.",
+  "Linked post di-fetch sekali; simpan dengan /savejd agar snapshot JD tetap terkunci.",
   "Score dari keyword overlap (rule-based), bukan AI.",
   "",
   "Privacy: CV PDF diproses di memori dan tidak disimpan ke server sebagai file.",
@@ -148,8 +153,43 @@ function scoreBandLabel(score: number): string {
   return "Strong interview — match kuat; tetap verifikasi missing penting";
 }
 
-export function formatScoreMessage(result: ScoreResult, fileName = "CV"): string {
+function recommendationLabel(value: AiExplanation["recommendation"]): string {
+  if (value === "strong_match") return "Strong match — lanjutkan ke interview terarah";
+  if (value === "review") return "Review — validasi gap sebelum keputusan";
+  return "Weak match — gap keyword masih besar";
+}
+
+function explanationLines(explanation: AiExplanation): string[] {
+  return [
+    "<b>AI explanation</b>",
+    escapeHtml(explanation.summary),
+    `<b>Matched requirements:</b> ${explanation.matchedRequirements.length > 0 ? explanation.matchedRequirements.map(escapeHtml).join(", ") : "(tidak ada)"}`,
+    `<b>Missing requirements:</b> ${explanation.missingRequirements.length > 0 ? explanation.missingRequirements.map(escapeHtml).join(", ") : "(tidak ada)"}`,
+    `<b>Confidence:</b> ${Math.round(explanation.confidence * 100)}%`,
+    `<b>Recommendation:</b> ${escapeHtml(recommendationLabel(explanation.recommendation))}`,
+    ...(explanation.semanticRequirements.length > 0
+      ? [
+          "<b>Requirement assessment:</b>",
+          ...explanation.semanticRequirements.slice(0, 6).map((item) =>
+            `• ${escapeHtml(item.status)} — ${escapeHtml(item.requirement)}: ${escapeHtml(item.evidence)}`,
+          ),
+        ]
+      : []),
+    "<b>Interview questions:</b>",
+    ...explanation.interviewQuestions.map((question) => `• ${escapeHtml(question)}`),
+    explanation.source === "fallback"
+      ? "<i>AI tidak tersedia; penjelasan deterministic ditampilkan.</i>"
+      : "<i>Score tetap berasal dari deterministic keyword matching.</i>",
+  ];
+}
+
+export function formatScoreMessage(
+  result: ScoreResult,
+  fileName = "CV",
+  explanation?: AiExplanation,
+): string {
   const fileLine = `File: <b>${escapeHtml(fileName)}</b>`;
+  const aiLines = explanation ? explanationLines(explanation) : [];
 
   if (result.totalKeywords === 0) {
     return [
@@ -158,23 +198,20 @@ export function formatScoreMessage(result: ScoreResult, fileName = "CV"): string
       "Tidak ada keyword yang cukup dari JD.",
       "",
       "Coba paste bagian Requirements yang lebih spesifik, atau <b>Ganti JD</b>.",
+      ...(aiLines.length > 0 ? ["", ...aiLines] : []),
       BRANDING_FOOTER,
     ].join("\n");
   }
 
-  const matched =
-    result.matched.length > 0
-      ? result.matched.map((k) => `• ${escapeHtml(k)}`).join("\n")
-      : "• (tidak ada)";
-  const missing =
-    result.missing.length > 0
-      ? result.missing.map((k) => `• ${escapeHtml(k)}`).join("\n")
-      : "• (tidak ada)";
-
-  const tip =
-    result.missing.length > 0
-      ? "Tip HR: missing keywords bisa jadi pertanyaan interview — jangan anggap score sebagai keputusan final."
-      : "Tip HR: keyword JD sudah banyak yang match. Tetap verifikasi pengalaman di interview.";
+  const matched = result.matched.length > 0
+    ? result.matched.map((keyword) => `• ${escapeHtml(keyword)}`).join("\n")
+    : "• (tidak ada)";
+  const missing = result.missing.length > 0
+    ? result.missing.map((keyword) => `• ${escapeHtml(keyword)}`).join("\n")
+    : "• (tidak ada)";
+  const tip = result.missing.length > 0
+    ? "Tip HR: missing keywords bisa jadi pertanyaan interview — jangan anggap score sebagai keputusan final."
+    : "Tip HR: keyword JD sudah banyak yang match. Tetap verifikasi pengalaman di interview.";
 
   return [
     "<b>Hasil screening</b>",
@@ -190,10 +227,10 @@ export function formatScoreMessage(result: ScoreResult, fileName = "CV"): string
     missing,
     "",
     tip,
+    ...(aiLines.length > 0 ? ["", ...aiLines] : []),
     BRANDING_FOOTER,
   ].join("\n");
 }
-
 const RANKING_DISPLAY_LIMIT = 10;
 
 export function formatRankingMessage(results: ScreenedResult[]): string {

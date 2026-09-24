@@ -1,0 +1,5 @@
+Full-Stack Software Developer
+
+Required skills: Java, Spring Boot, React, TypeScript, JavaScript, REST APIs, JWT, PostgreSQL, Redis, Docker, CI/CD, JUnit, Mockito, and cross-functional teamwork.
+
+Preferred skills: Kubernetes, GraphQL, and React Native.
