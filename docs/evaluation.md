@@ -7,9 +7,10 @@ Run from the repository root:
 ```bash
 npm run typecheck
 npm test
+npm run build
 ```
 
-Tests cover missing API key fallback, provider failure, timeout, malformed JSON, invalid schema, exact matched/missing preservation, score-based recommendation, Telegram HTML escaping, and session expiry.
+Tests cover missing API key fallback, provider failure, timeout, malformed JSON, invalid schema, exact matched/missing preservation, score-based recommendation, Telegram HTML escaping, and session expiry. The build command verifies the production `dist/` output used by Docker.
 
 ## Manual smoke test
 
@@ -27,3 +28,7 @@ Tests cover missing API key fallback, provider failure, timeout, malformed JSON,
 - Sessions and scores disappear on process restart.
 - Provider explanations are optional and not a hiring decision.
 - No end-to-end Telegram test is included; it requires a real bot token and external services.
+
+## Verification boundary
+
+The default automated suite uses mocked provider responses so it is safe and repeatable without credentials. A manual smoke test with `BOT_TOKEN`, optional `GROQ_API_KEY`, and `DATABASE_URL` is still required before production release to verify Telegram, Groq, and Neon connectivity together.
