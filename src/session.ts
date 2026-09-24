@@ -92,6 +92,7 @@ export function takeBotMessages(chatId: number): number[] {
 
 export function clearSession(chatId: number): void {
   sessions.delete(chatId);
+  botMessages.delete(chatId);
 }
 
 export function cleanupExpiredSessions(now = Date.now()): number {

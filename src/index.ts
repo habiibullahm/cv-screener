@@ -31,8 +31,7 @@ if (token.includes("your_telegram_bot_token_here") || !token.includes(":")) {
 try {
   await ensureStorageSchema();
 } catch {
-  console.error("Database schema initialization failed.");
-  process.exit(1);
+  console.error("Database unavailable; saved JD persistence is disabled for this process.");
 }
 
 const bot = createBot(token);

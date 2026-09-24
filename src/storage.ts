@@ -19,7 +19,9 @@ function getPool(): Pool | undefined {
   if (!pool) {
     const config: PoolConfig = { connectionString, max: 5 };
     if (process.env.DATABASE_SSL !== "false") {
-      config.ssl = { rejectUnauthorized: false };
+      config.ssl = {
+        rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false",
+      };
     }
     pool = new Pool(config);
   }
